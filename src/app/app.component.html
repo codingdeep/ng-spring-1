@@ -1,0 +1,219 @@
+<app-header></app-header>
+<div class="main-content mt-5">
+  <div class="container-fluid">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="table-responsive" style="min-height: 100vh">
+          <ng-container
+            *ngIf="appState$ | async as appState"
+            [ngSwitch]="appState.dataState"
+          >
+            <div class="table-title">
+              <div class="d-flex justify-between">
+                <div class="col-sm-6">
+                  <h2>Manage Servers</h2>
+                </div>
+                <div class="col-sm-6">
+                  <button type="button" class="btn btn-primary">
+                    Print Report
+                  </button>
+
+                  <a
+                    href="#addEmployeeModal"
+                    class="btn btn-success"
+                    data-toggle="modal"
+                    (click)="open(content)"
+                  >
+                    <i class="material-icons">&#xE147;</i>
+                    <span>New Server</span>
+                  </a>
+
+                  <span>
+                    <select
+                      name="status"
+                      (ngModelChange)="filterServer($event)"
+                      ngModel="ALL"
+                      class="btn btn-info"
+                      style="height: 32.91px"
+                    >
+                      <option value="ALL">ALL</option>
+                      <option value="SERVER_UP">SERVER UP</option>
+                      <option value="SERVER_DOWN">SERVER DOWN</option>
+                    </select>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <br />
+            <ng-container *ngSwitchCase="DataState.LOADING_STATE">
+              <div class="col-md-12 text-center">
+                <div class="spinner-border text-info"></div>
+              </div>
+            </ng-container>
+            <ng-container *ngSwitchCase="DataState.LOADED_STATE">
+              <!-- Table -->
+              <table class="table table-hover">
+                <thead>
+                  <!--thead-->
+                  <tr>
+                    <th>Image</th>
+                    <th>IP Address</th>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Status</th>
+                    <th>Ping</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <!--thead end-->
+                <tbody
+                  *ngFor="
+                    let server of appState.appData.data.servers;
+                    let i = index
+                  "
+                >
+                  <!--tbody-->
+                  <tr>
+                    <td>Image</td>
+                    <td>{{ server.ipAddress }}</td>
+                    <td>{{ server.name }}</td>
+                    <td>{{ server.memory }}</td>
+                    <td>{{ server.type }}</td>
+                    <td>
+                      <span
+                        class="badge"
+                        [ngClass]="[
+                          server.status === Status.SERVER_UP
+                            ? 'bg-success'
+                            : 'bg-danger'
+                        ]"
+                      >
+                        {{
+                          server.status === Status.SERVER_UP
+                            ? "SERVER UP"
+                            : "SERVER DOWN"
+                        }}
+                      </span>
+                    </td>
+                    <td>
+                      <a (click)="pingServer(server.ipAddress)">
+                        <i
+                          *ngIf="
+                            (filterStatus$ | async) === '' ||
+                            (filterStatus$ | async) !== server.ipAddress
+                          "
+                          class="fa fa-square"
+                        ></i>
+                        <i
+                          *ngIf="(filterStatus$ | async) === server.ipAddress"
+                          class="fa fa-cog fa-spin"
+                        ></i>
+                      </a>
+                    </td>
+                    <td>
+                      <a>
+                        <i class="fa fa-trash text-danger"></i>
+                      </a>
+                    </td>
+                  </tr>
+                </tbody>
+                <!--tbody end-->
+              </table>
+              <!--table end-->
+            </ng-container>
+            <ng-container *ngSwitchCase="DataState.ERROR_STATE">
+              <div class="alert alert-danger">this is the error</div>
+            </ng-container>
+          </ng-container>
+        </div>
+      </div>
+      <div class="col-md-6">
+        <router-outlet></router-outlet>
+      </div>
+    </div>
+  </div>
+
+  <!--MODAL-->
+
+  <ng-template #content let-modal>
+    <div class="modal-header">
+      <h4 class="modal-title" id="modal-basic-title">Add New Server</h4>
+      <button
+        type="button"
+        class="btn-close"
+        aria-label="Close"
+        (click)="modal.dismiss('Cross click')"
+      ></button>
+    </div>
+    <form #serverForm="ngForm" (ngSubmit)="saveServer(serverForm)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label>IP</label>
+          <input
+            type="text"
+            ngModel
+            name="ipAddress"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="form-group">
+          <label>Name</label>
+          <input
+            type="text"
+            ngModel
+            name="name"
+            class="form-control"
+            required
+          />
+        </div>
+        <div class="row">
+          <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-6">
+            <div class="form-group">
+              <label>Memory</label>
+              <input
+                type="text"
+                ngModel
+                name="memory"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+          <div class="col-xl-6 col-lg-6 col-md-6 col-sm-6 col-6">
+            <div class="form-group">
+              <label>Type</label>
+              <input
+                type="text"
+                ngModel
+                name="type"
+                class="form-control"
+                required
+              />
+            </div>
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select
+            name="status"
+            ngModel="SERVER_DOWN"
+            class="form-control"
+            name="status"
+            required
+          >
+            <option value="SERVER_UP">SERVER UP</option>
+            <option value="SERVER_DOWN">SERVER DOWN</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="submit" class="btn btn-success">
+          <i class="fas fa-spinner fa-spin"></i>
+          <span>Saving...</span>
+          <span>Add</span>
+        </button>
+      </div>
+    </form>
+  </ng-template>
+</div>
